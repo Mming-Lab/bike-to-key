@@ -1,1 +1,19 @@
+# Node-RED
 *.backup
+flows_cred.json
+.config.*.json
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

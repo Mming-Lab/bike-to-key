@@ -1,9 +1,32 @@
-bike-to-key
-===========
+# BikeToKey
 
-フィットネスバイクの回転数でキーシミュレーション
+BLEフィットネスバイクでMinecraft Education Editionを操作するNode-REDプロジェクト
 
-### About
+## 概要
 
-This is your project's README.md file. It helps users understand what your
-project does, how to use it and anything else they may need to know.
+バイクを漕ぐ速さに応じてMinecraftキャラクターが移動します。
+
+- 速く漕ぐ (>55rpm): ダッシュ
+- 普通に漕ぐ (1-55rpm): 通常移動
+- 停止 (<1rpm): 停止
+
+## 必要なもの
+
+- FTMS対応BLEフィットネスバイク
+- Node-RED
+- Minecraft Education Edition
+
+## 使い方
+
+1. バイクの電源をON
+2. Minecraftを起動してワールドに入る
+3. Node-REDで [開始] ボタンをクリック
+4. バイクを漕ぐ
+
+## ライセンス
+
+MIT License
+
+## 作者
+
+mming

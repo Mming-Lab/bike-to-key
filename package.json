@@ -1,8 +1,26 @@
 {
     "name": "bike-to-key",
-    "description": "フィットネスバイクの回転数でキーシミュレーション",
-    "version": "0.0.1",
-    "dependencies": {},
+    "description": "BLEフィットネスバイクでMinecraft Education Editionを操作",
+    "version": "1.0.0",
+    "author": "mming",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mming/bike-to-key.git"
+    },
+    "keywords": [
+        "node-red",
+        "minecraft",
+        "education",
+        "fitness",
+        "bluetooth",
+        "ble",
+        "ftms"
+    ],
+    "dependencies": {
+        "node-red-contrib-noble-bluetooth": "^0.9.1",
+        "robotjs": "^0.6.0"
+    },
     "node-red": {
         "settings": {
             "flowFile": "flows.json",
