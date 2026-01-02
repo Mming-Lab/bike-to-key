@@ -1,0 +1,371 @@
+[
+    {
+        "id": "5cf9b3d9818214c9",
+        "type": "tab",
+        "label": "フィットネスバイクでマイクラ",
+        "disabled": false,
+        "info": "# フィットネスバイクでマイクラ\n\nBLEフィットネスバイクの回転数(cadence)でMinecraft Education Editionのキャラクターを操作します。\n\n## 使い方\n\n1. バイクの電源をON\n2. Minecraftを起動してワールドに入る\n3. [開始]ボタンをクリック\n4. バイクを漕ぐ\n\n### 一時停止/再開\n\n- **一時停止**: [一時停止]ボタンをクリック\n  - BLE接続は維持（再接続不要）\n  - キーは自動的に離れる\n- **再開**: [再開]ボタンをクリック\n  - すぐに再開できる\n\n## 速度制御\n\n| cadence (rpm) | Minecraft操作 | キー |\n|---|---|---|\n| > 55 | ダッシュ | W + Control |\n| 1 ~ 55 | 通常前進 | W |\n| < 1 | 停止 | (キーを離す) |\n\n## 停止装置（3種類）\n\n### 1. 自動停止（cadence検知）\n- **条件**: cadence < 1 rpm\n- **動作**: Wキー、Controlキーを自動的に離す\n- **目的**: 漕ぐのを止めたら自動的に停止\n\n### 2. 緊急停止ボタン\n- **条件**: ボタンクリック\n- **動作**: 全てのキーを強制的に離す\n- **目的**: キーが押しっぱなしになった時に手動でリセット\n\n### 3. 一時停止ボタン\n- **条件**: ボタンクリック\n- **動作**: 全てのキーを離してからデータフローを停止\n- **目的**: 休憩時に一時的に停止（BLE接続は維持）\n\n### 終了時の安全装置\n- **条件**: Node-RED終了時\n- **動作**: 初期化・終了処理ノードで自動実行\n- **目的**: Node-REDを閉じた時も確実にキーを離す\n\n## Bluetooth仕様\n\n### Service UUID: 1826 (FTMS)\n- **正式名称**: Fitness Machine Service\n- **規格**: Bluetooth SIG標準サービス\n- **仕様書**: https://www.bluetooth.com/specifications/specs/fitness-machine-service-1-0/\n- **説明**: フィットネスマシン（トレッドミル、バイク等）用の標準BLEサービス\n- **個体依存**: なし（全てのFTMS対応機器で共通）\n\n### Characteristic UUID: 2ad2 (Indoor Bike Data)\n- **正式名称**: Indoor Bike Data\n- **データ形式**: 18バイト（リトルエンディアン）\n- **更新頻度**: 約1秒ごと\n- **含まれるデータ**: speed, cadence, distance, power, energy, time\n- **仕様書**: https://www.bluetooth.com/specifications/specs/gatt-specification-supplement/\n\n## トラブルシューティング\n\n### バイクに接続できない\n- バイクの電源が入っているか確認\n- Bluetoothがオンになっているか確認\n- 他のアプリがバイクに接続していないか確認\n\n### キーが押しっぱなしになった\n- [緊急停止]ボタンをクリック\n- Node-REDを再起動\n\n## 必要なパッケージ\n\n- node-red-contrib-noble-bluetooth\n- robotjs",
+        "env": []
+    },
+    {
+        "id": "7048fdae896e0275",
+        "type": "websocket-listener",
+        "path": "/ws",
+        "wholemsg": "true"
+    },
+    {
+        "id": "init_finalize_node",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "初期化・終了処理",
+        "func": "/**\n * 初期化・終了処理ノード\n * \n * このノードは実際にはメッセージを処理しない\n * 初期化タブと終了時タブで重要な処理を行う\n */\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "/**\n * 初期化処理\n * \n * Node-RED起動時に自動実行される\n * flow変数を初期状態にリセット\n */\n\n// 一時停止状態を解除\nflow.set('paused', false);\n\n// ログ出力\nnode.warn('✅ 初期化完了: 一時停止状態を解除しました');",
+        "finalize": "/**\n * 終了時処理\n * \n * Node-RED終了時に自動実行される\n * 全てのキーを離して安全な状態にする\n * \n * ★ここだけで実装（他のノードには不要）★\n */\n\n// Wキーを離す\nrobotjs.keyToggle('w', 'up');\n\n// Controlキーを離す\nrobotjs.keyToggle('control', 'up');\n\n// ログ出力\nnode.warn('🛑 終了時キーリセット完了');",
+        "libs": [
+            {
+                "var": "robotjs",
+                "module": "robotjs"
+            }
+        ],
+        "x": 180,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1cdf1482a9aae136",
+        "type": "inject",
+        "z": "5cf9b3d9818214c9",
+        "name": "開始",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 150,
+        "y": 140,
+        "wires": [
+            [
+                "ed01f862488b4593"
+            ]
+        ]
+    },
+    {
+        "id": "ed01f862488b4593",
+        "type": "BLE scanner",
+        "z": "5cf9b3d9818214c9",
+        "name": "FTMSバイクをスキャン (UUID:1826)",
+        "services": "1826",
+        "servicesType": "str",
+        "continuous": false,
+        "x": 300,
+        "y": 140,
+        "wires": [
+            [
+                "28481cc038050467"
+            ]
+        ]
+    },
+    {
+        "id": "28481cc038050467",
+        "type": "BLE device",
+        "z": "5cf9b3d9818214c9",
+        "name": "バイクに接続",
+        "x": 180,
+        "y": 220,
+        "wires": [
+            [
+                "26df239b799ebcbc"
+            ]
+        ]
+    },
+    {
+        "id": "26df239b799ebcbc",
+        "type": "BLE in",
+        "z": "5cf9b3d9818214c9",
+        "topic": "subscribe",
+        "characteristic": "2ad2",
+        "name": "バイクデータ受信 (UUID:2ad2)",
+        "x": 370,
+        "y": 220,
+        "wires": [
+            [
+                "pause_gate_node"
+            ]
+        ]
+    },
+    {
+        "id": "pause_gate_node",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "一時停止ゲート",
+        "func": "/**\n * 一時停止ゲート\n * \n * 【機能】\n * flow変数 'paused' の状態でメッセージの通過を制御\n * - paused = true:  メッセージを破棄（一時停止中）\n * - paused = false: メッセージを通す（通常動作）\n * \n * 【メリット】\n * - BLE接続は維持される（再接続不要）\n * - 一時停止中はキーが離れる（安全）\n * - 再開が速い\n */\n\n// flow変数から一時停止状態を取得\nconst paused = flow.get('paused') || false;\n\n// 一時停止中の場合\nif (paused) {\n    // ステータス表示（オレンジ色）\n    node.status({\n        fill: \"orange\", \n        shape: \"ring\", \n        text: \"一時停止中\"\n    });\n    \n    // メッセージを破棄（nullを返す）\n    return null;\n}\n\n// 通常動作中の場合\nnode.status({\n    fill: \"green\", \n    shape: \"dot\", \n    text: \"動作中\"\n});\n\n// メッセージをそのまま通す\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 200,
+        "y": 280,
+        "wires": [
+            [
+                "51ddf084c748a96f"
+            ]
+        ]
+    },
+    {
+        "id": "51ddf084c748a96f",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "FTMSデータ解析",
+        "func": "/**\n * FTMS Indoor Bike Dataパーサー\n * \n * 【仕様】\n * - Service UUID: 1826 (Fitness Machine Service)\n * - Characteristic UUID: 2ad2 (Indoor Bike Data)\n * - 仕様書: https://www.bluetooth.com/specifications/specs/fitness-machine-service-1-0/\n * \n * 【データフォーマット】\n * - 18バイトのバイナリデータ\n * - リトルエンディアン形式\n * - 更新頻度: 約1秒ごと\n * \n * 【バイトマップ】\n * Byte 0-1:   Flags (0x0000 = 全データ有効)\n * Byte 2-3:   Instantaneous Speed (0.01 km/h 単位)\n * Byte 4-5:   Instantaneous Cadence (0.5 rpm 単位) ← Minecraft制御に使用\n * Byte 6-8:   Total Distance (1 m 単位)\n * Byte 9-10:  Instantaneous Power (1 watt 単位)\n * Byte 11-12: Total Energy (1 kcal 単位)\n * Byte 13-14: Energy Per Hour (1 kcal/hour 単位)\n * Byte 15:    Energy Per Minute (1 kcal/minute 単位)\n * Byte 16-17: Elapsed Time (1 second 単位)\n * \n * 【抽出データ】\n * - speed: 速度 (km/h)\n * - cadence: 回転数 (rpm) ← Minecraftの速度制御に使用\n * - distance: 距離 (m)\n * - power: パワー (watts)\n * - totalEnergy: 総消費カロリー (kcal)\n * - energyPerHour: 時間あたり消費カロリー (kcal/hour)\n * - energyPerMinute: 分あたり消費カロリー (kcal/minute)\n * - elapsedTime: 経過時間 (seconds)\n */\n\n// ペイロードの存在確認\nif (msg.payload) {\n    const data = msg.payload;\n    \n    // データ長チェック（最低18バイト必要）\n    if (data.length < 18) {\n        node.error(\"データが短すぎます: \" + data.length + \"バイト\");\n        return null;\n    }\n    \n    // リトルエンディアン読み取り関数\n    const readUInt16LE = (offset) => data[offset] | (data[offset + 1] << 8);\n    const readUInt24LE = (offset) => data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16);\n    \n    // データ解析（FTMSバイトマップに従う）\n    const flags = readUInt16LE(0);              // フラグ（未使用）\n    const speed = readUInt16LE(2) * 0.01;       // 速度 (0.01 km/h単位)\n    const cadence = readUInt16LE(4) * 0.5;      // 回転数 (0.5 rpm単位)\n    const distance = readUInt24LE(6);           // 距離 (m)\n    const power = readUInt16LE(9);              // パワー (watts)\n    const totalEnergy = readUInt16LE(11);       // 総消費カロリー (kcal)\n    const energyPerHour = readUInt16LE(13);     // 時間あたり消費カロリー (kcal/hour)\n    const energyPerMinute = data[15];           // 分あたり消費カロリー (kcal/minute)\n    const elapsedTime = readUInt16LE(16);       // 経過時間 (seconds)\n\n    // ステータス表示\n    node.status({ fill: \"green\", shape: \"dot\", text: \"データ受信中\" });\n\n    // 解析結果を返す\n    return {\n        topic: 'ftmsData',\n        payload: {\n            speed: speed,\n            cadence: cadence,\n            distance: distance,\n            power: power,\n            totalEnergy: totalEnergy,\n            energyPerHour: energyPerHour,\n            energyPerMinute: energyPerMinute,\n            elapsedTime: elapsedTime\n        }\n    };\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 220,
+        "y": 360,
+        "wires": [
+            [
+                "27142d08d5e78ff2"
+            ]
+        ]
+    },
+    {
+        "id": "27142d08d5e78ff2",
+        "type": "switch",
+        "z": "5cf9b3d9818214c9",
+        "name": "回転数で分岐",
+        "property": "payload.cadence",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "55",
+                "vt": "num"
+            },
+            {
+                "t": "btwn",
+                "v": "1",
+                "vt": "num",
+                "v2": "55",
+                "v2t": "num"
+            },
+            {
+                "t": "lt",
+                "v": "1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 160,
+        "y": 500,
+        "wires": [
+            [
+                "18d0aae9a42eb03a"
+            ],
+            [
+                "cd4a2356763338e5"
+            ],
+            [
+                "3435ea82b0f823db"
+            ]
+        ]
+    },
+    {
+        "id": "18d0aae9a42eb03a",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "ダッシュ (>55rpm)",
+        "func": "/**\n * ダッシュ制御\n * \n * 【条件】\n * cadence > 55 rpm（速く漕いでいる）\n * \n * 【動作】\n * - Wキー: 押す（前進）\n * - Controlキー: 押す（ダッシュ）\n * → Minecraftで高速移動\n * \n * 【ステータス表示】\n * 1秒間だけ表示して自動消去（チカチカ効果）\n */\n\n// Wキーを押す（前進）\nrobotjs.keyToggle('w', 'down');\n\n// Controlキーを押す（ダッシュ）\nrobotjs.keyToggle('control', 'down');\n\n// ステータス表示（緑色、現在のcadence表示）\nnode.status({\n    fill: \"green\", \n    shape: \"dot\", \n    text: `ダッシュ ${msg.payload.cadence.toFixed(1)} rpm`\n});\n\n// 1秒後にステータスを消す（チカチカ効果）\nsetTimeout(() => {\n    node.status({});\n}, 1000);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "robotjs",
+                "module": "robotjs"
+            }
+        ],
+        "x": 410,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "cd4a2356763338e5",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "通常前進 (1-55rpm)",
+        "func": "/**\n * 通常前進制御\n * \n * 【条件】\n * 1 rpm ≤ cadence ≤ 55 rpm（普通に漕いでいる）\n * \n * 【動作】\n * - Wキー: 押す（前進）\n * - Controlキー: 離す（ダッシュなし）\n * → Minecraftで通常速度移動\n * \n * 【ステータス表示】\n * 1秒間だけ表示して自動消去（チカチカ効果）\n */\n\n// Wキーを押す（前進）\nrobotjs.keyToggle('w', 'down');\n\n// Controlキーを離す（ダッシュなし）\nrobotjs.keyToggle('control', 'up');\n\n// ステータス表示（黄色、現在のcadence表示）\nnode.status({\n    fill: \"yellow\", \n    shape: \"dot\", \n    text: `前進 ${msg.payload.cadence.toFixed(1)} rpm`\n});\n\n// 1秒後にステータスを消す（チカチカ効果）\nsetTimeout(() => {\n    node.status({});\n}, 1000);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "robotjs",
+                "module": "robotjs"
+            }
+        ],
+        "x": 420,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3435ea82b0f823db",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "自動停止 (<1rpm)",
+        "func": "/**\n * 自動停止（cadence検知）\n * \n * 【条件】\n * cadence < 1 rpm（ほぼ停止）\n * \n * 【動作】\n * - Wキー: 離す（前進停止）\n * - Controlキー: 離す（ダッシュ停止）\n * → Minecraftで停止\n * \n * 【ステータス表示】\n * 1秒間だけ表示して自動消去\n */\n\n// Wキーを離す（前進停止）\nrobotjs.keyToggle('w', 'up');\n\n// Controlキーを離す（ダッシュ停止）\nrobotjs.keyToggle('control', 'up');\n\n// ステータス表示（グレー、停止表示）\nnode.status({\n    fill: \"grey\", \n    shape: \"ring\", \n    text: \"停止\"\n});\n\n// 1秒後にステータスを消す\nsetTimeout(() => {\n    node.status({});\n}, 1000);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "robotjs",
+                "module": "robotjs"
+            }
+        ],
+        "x": 410,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "pause_button",
+        "type": "inject",
+        "z": "5cf9b3d9818214c9",
+        "name": "一時停止",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 640,
+        "y": 100,
+        "wires": [
+            [
+                "pause_action"
+            ]
+        ]
+    },
+    {
+        "id": "pause_action",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "一時停止処理",
+        "func": "/**\n * 一時停止処理\n * \n * 【動作】\n * 1. 全てのキーを離す（安全のため）\n * 2. flow変数 'paused' を true に設定\n * 3. 一時停止ゲートがメッセージを破棄\n * \n * 【メリット】\n * - BLE接続は維持（再接続不要）\n * - キーは確実に離れる（安全）\n * - 再開が速い\n */\n\n// 安全のため、まずキーを離す\nrobotjs.keyToggle('w', 'up');\nrobotjs.keyToggle('control', 'up');\n\n// 一時停止状態に設定\nflow.set('paused', true);\n\n// ステータス表示\nnode.status({\n    fill: \"orange\", \n    shape: \"ring\", \n    text: \"一時停止中\"\n});\n\n// ログ出力\nnode.warn('⏸️ 一時停止しました');\n\n// 3秒後にステータスを消す\nsetTimeout(() => {\n    node.status({});\n}, 3000);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "robotjs",
+                "module": "robotjs"
+            }
+        ],
+        "x": 810,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "resume_button",
+        "type": "inject",
+        "z": "5cf9b3d9818214c9",
+        "name": "再開",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 640,
+        "y": 140,
+        "wires": [
+            [
+                "resume_action"
+            ]
+        ]
+    },
+    {
+        "id": "resume_action",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "再開処理",
+        "func": "/**\n * 再開処理\n * \n * 【動作】\n * flow変数 'paused' を false に設定\n * → 一時停止ゲートがメッセージを通すようになる\n * \n * 【メリット】\n * - BLE接続はそのまま（再接続不要）\n * - 即座に再開できる\n */\n\n// 通常動作状態に設定\nflow.set('paused', false);\n\n// ステータス表示\nnode.status({\n    fill: \"green\", \n    shape: \"dot\", \n    text: \"再開しました\"\n});\n\n// ログ出力\nnode.warn('▶️ 再開しました');\n\n// 3秒後にステータスを消す\nsetTimeout(() => {\n    node.status({});\n}, 3000);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 790,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "abc123def456stop",
+        "type": "inject",
+        "z": "5cf9b3d9818214c9",
+        "name": "緊急停止",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 640,
+        "y": 180,
+        "wires": [
+            [
+                "ghi789jkl012stop"
+            ]
+        ]
+    },
+    {
+        "id": "ghi789jkl012stop",
+        "type": "function",
+        "z": "5cf9b3d9818214c9",
+        "name": "緊急停止処理",
+        "func": "/**\n * 緊急停止処理\n * \n * 【使用場面】\n * - キーが押しっぱなしになった時\n * - 予期せぬ動作が発生した時\n * - すぐに停止したい時\n * \n * 【動作】\n * 全てのキーを強制的に離す\n * BLE接続は維持される（再開が速い）\n * \n * 【注意】\n * msgを返さないので、後続ノードには流れない\n */\n\n// Wキーを離す（前進停止）\nrobotjs.keyToggle('w', 'up');\n\n// Controlキーを離す（ダッシュ停止）\nrobotjs.keyToggle('control', 'up');\n\n// ステータス表示（赤色、緊急停止）\nnode.status({\n    fill: \"red\", \n    shape: \"ring\", \n    text: \"緊急停止\"\n});\n\n// ログ出力\nnode.warn('🛑 緊急停止ボタンが押されました');\n\n// 1秒後にステータスを消す\nsetTimeout(() => {\n    node.status({});\n}, 1000);\n\n// nullを返す（後続ノードに流さない）\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "robotjs",
+                "module": "robotjs"
+            }
+        ],
+        "x": 800,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    }
+]

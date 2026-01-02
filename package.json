@@ -1,0 +1,12 @@
+{
+    "name": "bike-to-key",
+    "description": "フィットネスバイクの回転数でキーシミュレーション",
+    "version": "0.0.1",
+    "dependencies": {},
+    "node-red": {
+        "settings": {
+            "flowFile": "flows.json",
+            "credentialsFile": "flows_cred.json"
+        }
+    }
+}
