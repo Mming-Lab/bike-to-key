@@ -12,11 +12,17 @@
         "type": "inject",
         "z": "5cf9b3d9818214c9",
         "name": "開始",
-        "props": [],
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
         "repeat": "",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
+        "topic": "start",
         "x": 130,
         "y": 60,
         "wires": [
@@ -137,7 +143,7 @@
         "type": "function",
         "z": "5cf9b3d9818214c9",
         "name": "ダッシュ：[W]+[CTRL]キー",
-        "func": "/**\n * ダッシュ制御\n * \n * 【動作】\n * - Wキー: 押す（前進）\n * - Controlキー: 押す（ダッシュ）\n * \n * 【ステータス表示】\n * 1秒間だけ表示して自動消去（チカチカ効果）\n */\n\n// Wキーを押す（前進）\nrobotjs.keyToggle('w', 'down');\n\n// Controlキーを押す（ダッシュ）\nrobotjs.keyToggle('control', 'down');\n\n// ステータス表示（緑色、現在のcadence表示）\nnode.status({\n    fill: \"green\", \n    shape: \"dot\", \n    text: `ダッシュ ${msg.payload.cadence.toFixed(1)} rpm`\n});\n\n// 1秒後にステータスを消す（チカチカ効果）\nsetTimeout(() => {\n    node.status({});\n}, 1000);\n\nreturn msg;",
+        "func": "/**\n * ダッシュ制御\n * \n * 【動作】\n * - Wキー: 押す（前進）\n * - Controlキー: 押す（ダッシュ）\n */\n\nconst oldTimer = context.get('statusTimer');\nif (oldTimer) clearTimeout(oldTimer);\n\n// Wキーを押す（前進）\nrobotjs.keyToggle('w', 'down');\n\n// Controlキーを押す（ダッシュ）\nrobotjs.keyToggle('control', 'down');\n\n// ステータス表示（緑色、現在のcadence表示）\nnode.status({\n    fill: \"green\", \n    shape: \"dot\", \n    text: `ダッシュ ${msg.payload.cadence.toFixed(1)} rpm`\n});\n\n// 1秒後に消す（次のデータが来たらリセットされる）\nconst timer = setTimeout(() => {\n    node.status({});\n}, 1000);\ncontext.set('statusTimer', timer);\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -160,7 +166,7 @@
         "type": "function",
         "z": "5cf9b3d9818214c9",
         "name": "前進：[W]キー",
-        "func": "/**\n * 前進制御\n * \n * 【動作】\n * - Wキー: 押す（前進）\n * - Controlキー: 離す（ダッシュなし）\n * \n * 【ステータス表示】\n * 1秒間だけ表示して自動消去（チカチカ効果）\n */\n\n// Wキーを押す（前進）\nrobotjs.keyToggle('w', 'down');\n\n// Controlキーを離す（ダッシュなし）\nrobotjs.keyToggle('control', 'up');\n\n// ステータス表示（黄色、現在のcadence表示）\nnode.status({\n    fill: \"yellow\", \n    shape: \"dot\", \n    text: `前進 ${msg.payload.cadence.toFixed(1)} rpm`\n});\n\n// 1秒後にステータスを消す（チカチカ効果）\nsetTimeout(() => {\n    node.status({});\n}, 1000);\n\nreturn msg;",
+        "func": "/**\n * 前進制御\n * \n * 【動作】\n * - Wキー: 押す（前進）\n * - Controlキー: 離す（ダッシュなし）\n */\n\nconst oldTimer = context.get('statusTimer');\nif (oldTimer) clearTimeout(oldTimer);\n\n// Wキーを押す（前進）\nrobotjs.keyToggle('w', 'down');\n\n// Controlキーを離す（ダッシュなし）\nrobotjs.keyToggle('control', 'up');\n\n// ステータス表示（黄色、現在のcadence表示）\nnode.status({\n    fill: \"yellow\", \n    shape: \"dot\", \n    text: `前進 ${msg.payload.cadence.toFixed(1)} rpm`\n});\n\n// 1秒後に消す（次のデータが来たらリセットされる）\nconst timer = setTimeout(() => {\n    node.status({});\n}, 1000);\ncontext.set('statusTimer', timer);\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -183,7 +189,7 @@
         "type": "function",
         "z": "5cf9b3d9818214c9",
         "name": "停止",
-        "func": "/**\n * 停止\n * \n * 【動作】\n * - Wキー: 離す（前進停止）\n * - Controlキー: 離す（ダッシュ停止）\n * \n * 【ステータス表示】\n * 1秒間だけ表示して自動消去\n */\n\n// Wキーを離す（前進停止）\nrobotjs.keyToggle('w', 'up');\n\n// Controlキーを離す（ダッシュ停止）\nrobotjs.keyToggle('control', 'up');\n\n// ステータス表示（グレー、停止表示）\nnode.status({\n    fill: \"grey\", \n    shape: \"ring\", \n    text: \"停止\"\n});\n\n// 1秒後にステータスを消す\nsetTimeout(() => {\n    node.status({});\n}, 1000);\n\nreturn msg;",
+        "func": "/**\n * 停止\n * \n * 【動作】\n * - Wキー: 離す（前進停止）\n * - Controlキー: 離す（ダッシュ停止）\n */\n\nconst oldTimer = context.get('statusTimer');\nif (oldTimer) clearTimeout(oldTimer);\n\n// Wキーを離す（前進停止）\nrobotjs.keyToggle('w', 'up');\n\n// Controlキーを離す（ダッシュ停止）\nrobotjs.keyToggle('control', 'up');\n\n// ステータス表示（グレー、停止表示）\nnode.status({\n    fill: \"grey\", \n    shape: \"ring\", \n    text: \"停止\"\n});\n\n// 1秒後に消す（次のデータが来たらリセットされる）\nconst timer = setTimeout(() => {\n    node.status({});\n}, 1000);\ncontext.set('statusTimer', timer);\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
