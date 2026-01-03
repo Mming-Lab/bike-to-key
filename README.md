@@ -50,12 +50,13 @@ BikeToKeyは、BLEフィットネスバイクを漕ぐ速さに応じて、自�
 
 取得できるデータ: 速度、回転数、距離、パワー、消費カロリー、経過時間
 
-## 🎓 教育での活用
+## 🧠 動きながら集中する
 
-- 健康教育: デジタル使用時の運動習慣
-- 体育×ICT: 体を動かしながら学ぶ
-- STEM教育: センサー、プログラミング、運動の連携
-- データサイエンス: 運動データの可視化・分析
+ADHD特性のある子どもの中には、座ってじっとしているより、体を動かしている方が集中できる子がいます。
+
+米国の研究で、体を動かすこと（フィジェッティング）がADHD児の集中力を高めることが報告されています（[NPR教育](https://www.npr.org/sections/ed/2015/05/14/404959284/fidgeting-may-help-concentration-for-students-with-adhd)、[UC Davis](https://health.ucdavis.edu/news/headlines/does-fidgeting-help-people-with-adhd-focus-/2024/10)）。動くことで脳が覚醒し、前頭前皮質への血流が増加します。
+
+BikeToKeyは、この「動きながら集中できる」特性を活かして、デジタル活動に取り組みながら自然に運動できるツールです。
 
 ## 📄 ライセンス
 
